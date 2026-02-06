@@ -22,7 +22,6 @@ final class SDFRenderer {
         var time: Float
         var shapeCount: UInt32
         var smoothK: Float
-        var globalOffset: SIMD2<Float>
     }
 
     private var startTime = CACurrentMediaTime()
@@ -66,8 +65,7 @@ final class SDFRenderer {
             resolution: SIMD2(Float(drawableSize.width), Float(drawableSize.height)),
             time: t,
             shapeCount: UInt32(inputs.shapes.count),
-            smoothK: inputs.smoothK * scale,
-            globalOffset: inputs.globalOffset * scale
+            smoothK: inputs.smoothK * scale
         )
 
         enc.setFragmentBytes(&u, length: MemoryLayout<Uniforms>.stride, index: 0)

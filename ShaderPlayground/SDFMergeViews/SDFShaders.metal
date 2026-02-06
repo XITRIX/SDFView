@@ -39,7 +39,6 @@ struct Uniforms {
     float time;
     uint shapeCount;
     float smoothK;
-    float2 globalOffset;
 };
 
 float sdCircle(float2 p, float r) {
@@ -72,7 +71,7 @@ fragment float4 sdf_fragment(VOut in [[stage_in]],
     float falloff = 0.08; // tweak later; units are "per pixel"
 
     for (uint i = 0; i < u.shapeCount; i++) {
-        float2 c = shapes[i].center + u.globalOffset;
+        float2 c = shapes[i].center;
         float2 local = p - c;
 
         float di;
@@ -92,8 +91,26 @@ fragment float4 sdf_fragment(VOut in [[stage_in]],
 
     float3 col = (wsum > 0.0) ? (accum / wsum) : float3(1.0);
 
-    float aa = fwidth(dUnion); //1.5;
-    float alpha = smoothstep(aa, -aa, dUnion);
+    // Base fill alpha from the SDF edge with antialiasing
+    float aa = fwidth(dUnion);
+    float fillA = smoothstep(aa, -aa, dUnion);
 
-    return float4(col, alpha);
+    // Edge highlight (rim) near the surface using screen-space derivatives
+    float edgeBand = 2.5; // pixels around the edge
+    float edgeMask = 1.0 - smoothstep(0.0, edgeBand, abs(dUnion));
+
+    // Approximate normal from screen-space derivatives of the distance field
+    float2 grad = float2(dfdx(dUnion), dfdy(dUnion));
+    float2 n = (length(grad) > 1e-5) ? normalize(grad) : float2(0.0, 1.0);
+
+    // Fake light coming from top-left
+    float2 L = normalize(float2(-0.6, 0.8));
+    float rim = pow(saturate(1.0 - dot(n, L)), 3.0) * edgeMask;
+
+    // Compose: fill only inside, add rim highlight at the edge (no outer glow)
+    float3 outRGB = col * fillA + rim * 0.35;
+    float outA = fillA;
+
+    return float4(outRGB, outA);
 }
+

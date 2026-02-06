@@ -12,7 +12,6 @@ struct SDFInputs: Equatable {
     var shapes: [SDFShape] = []
     var smoothK: Float = 40   // pixels, tweak later
     var displayScale: Float = 1
-    var globalOffset: SIMD2<Float> = .zero
 }
 
 struct SDFMetalView: UIViewRepresentable {
@@ -46,7 +45,7 @@ struct SDFMetalView: UIViewRepresentable {
         view.framebufferOnly = true
 //        view.isPaused = true
 //        view.enableSetNeedsDisplay = true
-//        view.preferredFramesPerSecond = 120
+        view.preferredFramesPerSecond = 120
 
         view.delegate = context.coordinator
         context.coordinator.renderer.configure(with: view.device!)

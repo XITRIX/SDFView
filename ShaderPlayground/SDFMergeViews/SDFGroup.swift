@@ -9,20 +9,20 @@ import SwiftUI
 import simd
 
 struct SDFGroup<Content: View>: View {
+    private let smooth: Double
     @State private var inputs = SDFInputs()
     @ViewBuilder var content: Content
 
     @Environment(\.displayScale) private var displayScale: CGFloat
 
-    init(@ViewBuilder content: () -> Content) {
+    init(smooth: Double = 12, @ViewBuilder content: () -> Content) {
         self.content = content()
+        self.smooth = smooth
     }
 
     var body: some View {
         ZStack {
             SDFMetalView(inputs: inputs)
-                .ignoresSafeArea()
-
             content
         }
         .coordinateSpace(name: "SDFGroupSpace")
@@ -32,6 +32,9 @@ struct SDFGroup<Content: View>: View {
                     .onAppear { updateInputs(specs: specs, proxy: proxy) }
                     .onChange(of: specs) { _, newSpecs in
                         updateInputs(specs: newSpecs, proxy: proxy)
+                    }
+                    .onChange(of: smooth) { _, newValue in
+                        inputs.smoothK = Float(newValue)
                     }
             }
         }
@@ -54,11 +57,6 @@ struct SDFGroup<Content: View>: View {
             let cxPt = rect.midX - size.width / 2
             let cyPt = (size.height / 2) - rect.midY
 
-            // pixels
-            let cx = Float(cxPt) * scale
-            let cy = Float(cyPt) * scale
-            let r  = Float(spec.radius) * scale
-
             let w = Float(rect.width) * scale
             let h = Float(rect.height) * scale
 
@@ -77,9 +75,7 @@ struct SDFGroup<Content: View>: View {
 
         inputs = SDFInputs(
             shapes: shapes,
-            smoothK: inputs.smoothK,
-            globalOffset: SIMD2(0, -4.5 * Float(displayScale))
+            smoothK: inputs.smoothK
         )
     }
-
 }
